@@ -6,10 +6,6 @@ import random
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.ops import array_ops
-from tensorflow.python.ops import embedding_ops
-from tensorflow.python.ops import math_ops
-from tensorflow.python.ops import nn_ops
 
 import seq2seq
 from data_reader import PAD_ID, GO_ID
@@ -209,7 +205,7 @@ class TextCorrectorModel(object):
                     zip(clipped_gradients, params),
                     global_step=self.global_step))
 
-        self.saver = tf.train.Saver(tf.all_variables())
+        self.saver = tf.train.Saver(tf.global_variables())
 
     def build_input_bias(self, encoder_inputs, batch_corrective_tokens_mask):
         packed_one_hot_inputs = tf.one_hot(indices=tf.pack(
@@ -365,7 +361,7 @@ class TextCorrectorModel(object):
 
 def project_and_apply_input_bias(logits, output_projection, input_bias):
     if output_projection is not None:
-        logits = nn_ops.xw_plus_b(
+        logits = tf.nn.xw_plus_b(
             logits, output_projection[0], output_projection[1])
 
     # Apply softmax to ensure all tokens have a positive value.
@@ -374,7 +370,7 @@ def project_and_apply_input_bias(logits, output_projection, input_bias):
     # Apply input bias, which is a mask of shape [batch, vocab len]
     # where each token from the input in addition to all "corrective"
     # tokens are set to 1.0.
-    return tf.mul(probs, input_bias)
+    return tf.multiply(probs, input_bias)
 
 
 def apply_input_bias_and_extract_argmax_fn_factory(input_bias):
@@ -404,12 +400,12 @@ def apply_input_bias_and_extract_argmax_fn_factory(input_bias):
             prev = project_and_apply_input_bias(prev, output_projection,
                                                 input_bias)
 
-            prev_symbol = math_ops.argmax(prev, 1)
+            prev_symbol = tf.argmax(prev, 1)
             # Note that gradients will not propagate through the second
             # parameter of embedding_lookup.
-            emb_prev = embedding_ops.embedding_lookup(embedding, prev_symbol)
+            emb_prev = tf.nn.embedding_lookup(embedding, prev_symbol)
             if not update_embedding:
-                emb_prev = array_ops.stop_gradient(emb_prev)
+                emb_prev = tf.stop_gradient(emb_prev)
             return emb_prev, prev_symbol
         return loop_function
 

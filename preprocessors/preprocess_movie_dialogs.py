@@ -17,7 +17,7 @@ def main(_):
             dialog_line = parts[-1]
             s = dialog_line.strip().lower().decode("utf-8", "ignore")
             preprocessed_line = " ".join(nltk.word_tokenize(s))
-            out.write(preprocessed_line + "\n")
+            out.write((preprocessed_line + "\n").encode('utf-8'))
 
 if __name__ == "__main__":
     tf.app.run()
