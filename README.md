@@ -132,12 +132,14 @@ The primary contributions of this project are:
 - `TextCorrector.ipynb`: an IPython notebook which ties together all of the above pieces to allow for the training and evaluation of the model in an interactive fashion.
 
 ### Example Usage
-Note: this project requires TensorFlow version >= 0.11. See [this page](https://www.tensorflow.org/get_started/os_setup) for setup instructions.
+Note: this project requires TensorFlow version ~= 1.15.0. See [this page](https://www.tensorflow.org/get_started/os_setup) for setup instructions.
 
 **Preprocess Movie Dialog Data**
 ```
 python preprocessors/preprocess_movie_dialogs.py --raw_data movie_lines.txt \
-                                                 --out_file preprocessed_movie_lines.txt
+                                                 --train_file movie_dialog_train.txt \
+                                                 --val_file movie_dialog_val.txt \
+                                                 --test_file movie_dialog_test.txt
 ```
 This preprocessed file can then be split up however you like to create training, validation, and testing sets.
 
