@@ -73,6 +73,7 @@ from tensorflow.python.ops import rnn
 from tensorflow.contrib.rnn.python.ops import core_rnn_cell as rnn_cell 
 from tensorflow.python.ops import variable_scope
 from tensorflow.python.util import nest
+import tensorflow as tf
 
 # TODO(ebrevdo): Remove once _linear is fully deprecated.
 linear = rnn_cell._linear  # pylint: disable=protected-access
@@ -174,7 +175,7 @@ def basic_rnn_seq2seq(
           It is a 2D Tensor of shape [batch_size x cell.state_size].
     """
     with variable_scope.variable_scope(scope or "basic_rnn_seq2seq"):
-        _, enc_state = rnn.rnn(cell, encoder_inputs, dtype=dtype)
+        _, enc_state = rnn.static_rnn(cell, encoder_inputs, dtype=dtype)
         return rnn_decoder(decoder_inputs, enc_state, cell)
 
 
@@ -206,7 +207,7 @@ def tied_rnn_seq2seq(encoder_inputs, decoder_inputs, cell,
     """
     with variable_scope.variable_scope("combined_tied_rnn_seq2seq"):
         scope = scope or "tied_rnn_seq2seq"
-        _, enc_state = rnn.rnn(
+        _, enc_state = rnn.static_rnn(
             cell, encoder_inputs, dtype=dtype, scope=scope)
         variable_scope.get_variable_scope().reuse_variables()
         return rnn_decoder(decoder_inputs, enc_state, cell,
@@ -341,7 +342,7 @@ def embedding_rnn_seq2seq(encoder_inputs,
         encoder_cell = rnn_cell.EmbeddingWrapper(
             cell, embedding_classes=num_encoder_symbols,
             embedding_size=embedding_size)
-        _, encoder_state = rnn.rnn(encoder_cell, encoder_inputs, dtype=dtype)
+        _, encoder_state = rnn.static_rnn(encoder_cell, encoder_inputs, dtype=dtype)
 
         # Decoder.
         if output_projection is None:
@@ -610,7 +611,7 @@ def attention_decoder(decoder_inputs,
                     ndims = q.get_shape().ndims
                     if ndims:
                         assert ndims == 2
-                query = array_ops.concat(1, query_list)
+                query = tf.raw_ops.Concat(concat_dim=1, values=query_list)
             for a in xrange(num_heads):
                 with variable_scope.variable_scope("Attention_%d" % a):
                     y = linear(query, attention_vec_size, True)
@@ -817,13 +818,13 @@ def embedding_attention_seq2seq(encoder_inputs,
         encoder_cell = rnn_cell.EmbeddingWrapper(
             cell, embedding_classes=num_encoder_symbols,
             embedding_size=embedding_size)
-        encoder_outputs, encoder_state = rnn.rnn(
+        encoder_outputs, encoder_state = rnn.static_rnn(
             encoder_cell, encoder_inputs, dtype=dtype)
-
+        print(encoder_outputs)
         # First calculate a concatenation of encoder outputs to put attention on.
         top_states = [array_ops.reshape(e, [-1, 1, cell.output_size])
                       for e in encoder_outputs]
-        attention_states = array_ops.concat(1, top_states)
+        attention_states = tf.raw_ops.Concat(concat_dim=1, values=top_states)
 
         # Decoder.
         output_size = None
@@ -939,7 +940,7 @@ def one2many_rnn_seq2seq(encoder_inputs,
         encoder_cell = rnn_cell.EmbeddingWrapper(
             cell, embedding_classes=num_encoder_symbols,
             embedding_size=embedding_size)
-        _, encoder_state = rnn.rnn(encoder_cell, encoder_inputs, dtype=dtype)
+        _, encoder_state = rnn.static_rnn(encoder_cell, encoder_inputs, dtype=dtype)
 
         # Decoder.
         for name, decoder_inputs in decoder_inputs_dict.items():

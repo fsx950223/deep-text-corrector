@@ -1,2 +1,2 @@
 nltk==3.2.4
-tensorflow~=1.15.0
+tensorflow-gpu~=1.15.0
